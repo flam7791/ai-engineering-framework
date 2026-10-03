@@ -55,9 +55,9 @@ ones marked ●.
 | Tool protocol | ● Model Context Protocol (official Python SDK) | stdio locally, streamable HTTP on a network |
 | Gateway | ● governed-llm-gateway; LiteLLM proxy | Routing, budgets, masking, local_only |
 | Metrics and alerts | ● Prometheus, Grafana | |
-| Traces | OpenTelemetry with Jaeger or Grafana Tempo; Langfuse (self-hosted) for LLM traces | |
+| Traces | ● OpenTelemetry with Jaeger or Grafana Tempo; Langfuse (self-hosted) for LLM traces | GenAI semantic conventions; no prompt text on spans |
 | Chat front end | Open WebUI | Points at the gateway |
-| Containers and orchestration | ● Docker Compose; Kubernetes (k3s, OpenShift) on-premises | |
+| Containers and orchestration | ● Docker Compose; ● Kubernetes with Kustomize (AKS, k3s, OpenShift) | Restricted pod security, default-deny network policies |
 
 ### Rough hardware planning
 
