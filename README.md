@@ -1,5 +1,7 @@
 # ai-engineering-framework
 
+[![CI](https://github.com/flam7791/ai-engineering-framework/actions/workflows/ci.yml/badge.svg)](https://github.com/flam7791/ai-engineering-framework/actions/workflows/ci.yml) [![Licence: MIT](https://img.shields.io/badge/licence-MIT-blue.svg)](LICENSE) ![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue.svg)
+
 **A local-first engineering framework for governed AI services: how an organisation identifies,
 builds, industrialises and operates AI solutions the same way every time.**
 
