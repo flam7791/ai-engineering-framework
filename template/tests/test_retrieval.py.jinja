@@ -1,0 +1,22 @@
+from {{ package_name }} import documents
+from {{ package_name }}.retrieval import Index, tokens
+
+from .conftest import ROOT
+
+
+def index():
+    passages, _ = documents.load(ROOT / "corpus", "internal")
+    return Index(passages)
+
+
+def test_finds_the_right_section():
+    top = index().search("deadline to submit an expense claim", k=1)[0][0]
+    assert top.id == "FIN-012#1"
+
+
+def test_unrelated_question_finds_nothing_above_threshold():
+    assert index().search("capital of Australia", k=4, min_score=0.5) == []
+
+
+def test_tokens_drop_stopwords_and_plural_s():
+    assert tokens("The receipts for flights") == ["receipt", "flight"]

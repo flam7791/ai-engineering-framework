@@ -1,0 +1,49 @@
+# System card: {{ project_name }}
+
+| | |
+|---|---|
+| Owner | {{ owner }} |
+| Pattern | P1, governed retrieval with a sensitivity ceiling |
+| Model | `{{ local_model }}` (open weight, local) by default; set per deployment |
+| Classification ceiling | `{{ classification_ceiling }}` |
+| Version | 0.1.0 |
+
+## Intended use
+
+Staff ask questions about approved internal documents and receive short answers with citations
+to the passages used. Answers support, and do not replace, the documents and the people who own
+them.
+
+## Out of scope
+
+- Decisions about individuals (eligibility, performance, entitlements)
+- Legal or financial advice
+- Questions about documents above the classification ceiling, which the service never loads
+- Acting on anything: the service only answers
+
+## Data
+
+Documents are Markdown files with an id, a title and a classification. Questions are processed
+in memory; the audit log keeps a hash of each question, never its text. With the default local
+model, no text leaves the machine or server where the service runs.
+
+## How it can fail
+
+- **A wrong answer with a valid citation.** The validator checks that a cited source was given,
+  not that the sentence is faithful to it. The monthly sample review looks for exactly this.
+- **Not found when the answer exists.** Keyword retrieval misses paraphrases. Add embeddings
+  from a local model when the not-found rate shows it.
+- **Small local models** follow the citation format less reliably than large ones; withheld
+  answers rise. The recorded evaluation shows the rate for each model.
+
+## Evaluation
+
+`evals/cases.jsonl`: answered questions with the expected document, a planted prompt injection,
+a document above the ceiling, an out-of-scope question and an empty one. CI runs it with the
+deterministic stand-in (plumbing and guardrails) and replays the recorded live run (quality).
+Results for each model are in `evals/results/`.
+
+## Human oversight
+
+Answers carry their citations so the reader can check them. Withheld answers are logged with
+the reason for review. The owner reviews a sample of real questions each month (OPERATIONS.md).

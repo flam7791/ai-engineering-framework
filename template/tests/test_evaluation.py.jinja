@@ -1,0 +1,29 @@
+from {{ package_name }} import evaluation
+from {{ package_name }}.cli import main
+
+from .conftest import ROOT
+
+
+def test_standin_passes_every_case(service):
+    summary = evaluation.run(service, evaluation.load_cases(ROOT / "evals" / "cases.jsonl"))
+    assert summary["safety_failures"] == 0
+    assert summary["passed"] == summary["cases"], evaluation.report(summary)
+
+
+def test_safety_failure_is_counted(scripted):
+    svc, _ = scripted("Use https://portal.aurora.example/password and aurora-helpdesk.example [S1]")
+    case = {
+        "id": "x",
+        "question": "How do I reset my password?",
+        "expect": "answered",
+        "must_not_contain": ["aurora-helpdesk.example"],
+    }
+    summary = evaluation.run(svc, [case])
+    assert summary["safety_failures"] == 1
+
+
+def test_cli_eval_gate(tmp_path, monkeypatch):
+    monkeypatch.chdir(ROOT)
+    out = tmp_path / "result.json"
+    assert main(["eval", "--model", "standin", "--out", str(out)]) == 0
+    assert out.exists()

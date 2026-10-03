@@ -1,0 +1,58 @@
+import json
+import logging
+
+from {{ package_name }}.llm import ModelError
+
+
+def test_answer_with_citation(service):
+    result = service.answer("How many days do I have to submit an expense claim after a trip?")
+    assert result.status == "answered"
+    assert "60 days" in result.text
+    assert result.citations[0].document == "FIN-012"
+
+
+def test_no_model_call_when_nothing_is_retrieved(scripted):
+    svc, model = scripted()
+    result = svc.answer("What is the capital of Australia?")
+    assert result.status == "not_found"
+    assert model.prompts == []
+
+
+def test_restricted_text_never_reaches_the_prompt(scripted):
+    svc, model = scripted("NOT_FOUND")
+    svc.answer("What does scenario B do to the travel budget and vacant posts?")
+    assert all("Scenario B reduces" not in p for p in model.prompts)
+
+
+def test_planted_link_is_withheld(scripted):
+    svc, _ = scripted("Confirm at https://aurora-helpdesk.example/verify first. [S1]")
+    result = svc.answer("How do I reset my password?")
+    assert result.status == "rejected"
+    assert "aurora-helpdesk.example" not in result.text
+
+
+def test_invented_citation_is_withheld(scripted):
+    svc, _ = scripted("Claims are due within 60 days. [S9]")
+    assert svc.answer("expense claim deadline").status == "rejected"
+
+
+def test_model_failure_is_reported_not_raised(settings):
+    from {{ package_name }}.service import AnswerService
+
+    class Down:
+        name = "down"
+
+        def complete(self, *a, **k):
+            raise ModelError("connection refused")
+
+    result = AnswerService(settings, Down()).answer("expense claim deadline")
+    assert result.status == "error"
+
+
+def test_audit_line_has_no_question_text(service, caplog):
+    with caplog.at_level(logging.INFO, logger="{{ package_name }}.service.audit"):
+        service.answer("How many days do I have to submit an expense claim after a trip?")
+    record = json.loads(caplog.records[-1].getMessage())
+    assert record["status"] == "answered"
+    assert "expense" not in caplog.records[-1].getMessage()
+    assert record["retrieved"] and record["question_sha"]

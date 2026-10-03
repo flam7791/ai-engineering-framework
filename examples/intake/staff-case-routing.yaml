@@ -1,0 +1,22 @@
+# A fictional use case at a fictional organisation (the Aurora Institute).
+id: UC-021
+title: Route staff support cases and draft first responses
+owner: Head of Staff Services
+task: multi_step_with_actions
+problem: >
+  Staff support cases arrive by email; triage and a first reply take a day. An agent would
+  classify the case, look up the policy, draft the reply and route it to the right adviser.
+users: 12
+uses_per_month: 900
+minutes_saved_per_use: 8
+tokens_per_use: 6000
+data:
+  classification: restricted
+  personal_data: true
+  source_quality: mixed
+actions: external                  # the agent would send the reply
+error_tolerance: low
+systems: [case system, email, policy library]
+systems_have_apis: true
+reusable_across_units: false
+owner_after_launch: Staff Services

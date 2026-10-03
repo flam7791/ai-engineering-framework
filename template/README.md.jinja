@@ -1,0 +1,86 @@
+# {{ project_name }}
+
+{{ description }}
+
+Generated from [ai-engineering-framework](https://github.com/flam7791/ai-engineering-framework)
+(pattern P1: governed retrieval with a sensitivity ceiling). Owner: **{{ owner }}**.
+
+```mermaid
+flowchart LR
+    Q[Question] --> G1{Question checks}
+    G1 --> R[Keyword retrieval<br/>documents at or below<br/>'{{ classification_ceiling }}' only]
+    R -- nothing relevant --> NF[Not found<br/>no model call]
+    R --> M[Model<br/>local by default]
+    M --> V{Validator<br/>cites a given source?<br/>links allowed?}
+    V -- yes --> A[Answer + citations]
+    V -- no --> W[Withheld, with reason]
+    A & W & NF --> L[(Audit line<br/>no question text)]
+```
+
+- **Local first.** The default model is `{{ local_model }}` through [Ollama](https://ollama.com),
+  so nothing leaves the machine. Any OpenAI-compatible endpoint (vLLM on a GPU server, an LLM
+  gateway, a cloud deployment in your tenant) is a change of two settings, not of code.
+- **Guardrails in code.** Documents above the ceiling are never loaded. An answer is released
+  only if it cites a source it was given and links only to allowed domains.
+- **Evaluated.** `evals/cases.jsonl` covers answers, citations, a planted prompt injection, a
+  withheld document and out-of-scope questions. CI runs it on every push.
+
+## Quick start
+
+```bash
+python -m venv .venv
+# Windows: .venv\Scripts\activate      macOS/Linux: source .venv/bin/activate
+pip install -e ".[dev]"
+pytest                                   # offline, no model needed
+{{ project_slug }} eval --model standin  # the evaluation with the deterministic stand-in
+```
+
+### With a local open-weight model (Ollama)
+
+```bash
+ollama pull {{ local_model }}
+{{ project_slug }} ask "How many days do I have to submit an expense claim?"
+{{ project_slug }} serve                 # http://127.0.0.1:8000/health, POST /answer
+```
+
+### Record a live evaluation, replay it in CI
+
+```bash
+{{ project_slug }} eval --model live --recordings evals/recordings/local \
+    --out evals/results/local.json --min-pass 0
+{{ project_slug }} eval --model replay --recordings evals/recordings/local   # offline, free
+```
+
+Commit `evals/recordings/local` and `evals/results/local.json`. CI then replays the run on
+every push: a change to the prompt, the retrieval or the documents shows up as a replay miss.
+Record a second folder against another endpoint (a larger local model, a gateway, a cloud model)
+to compare quality, latency and tokens on the same cases.
+
+### Containers
+
+```bash
+docker compose --profile standin up -d --build --wait   # no model: stand-in, for a demo
+docker compose --profile local up -d --build --wait     # app + Ollama
+docker compose exec ollama ollama pull {{ local_model }}
+```
+
+## Configuration
+
+Environment variables, prefixed `{{ package_name | upper }}_`:
+
+| Variable | Default | Notes |
+|---|---|---|
+| `MODEL_BASE_URL` | `http://localhost:11434/v1` | Any OpenAI-compatible endpoint |
+| `MODEL_NAME` | `{{ local_model }}` | Model or deployment name |
+| `MODEL_API_KEY` | none | Not needed for a local model; use a secret store otherwise |
+| `CORPUS_DIR` | `corpus` | Markdown documents with front matter |
+| `MAX_CLASSIFICATION` | `{{ classification_ceiling }}` | Documents above it are never loaded |
+| `ALLOWED_LINK_DOMAINS` | `aurora.example` | Comma-separated |
+| `TOP_K` / `MIN_SCORE` | `4` / `0.5` | Retrieval |
+
+## Documents for operation
+
+- [OPERATIONS.md](OPERATIONS.md): release gate, monitoring, runbook, ownership
+- [SYSTEM_CARD.md](SYSTEM_CARD.md): intended use, limits, evaluation, human oversight
+- [THREAT_MODEL.md](THREAT_MODEL.md): threats and the control for each
+- [docs/decisions.md](docs/decisions.md): design decisions

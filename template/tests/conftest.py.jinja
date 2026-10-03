@@ -1,0 +1,41 @@
+from pathlib import Path
+
+import pytest
+
+from {{ package_name }}.config import Settings
+from {{ package_name }}.llm import Reply, StandInModel
+from {{ package_name }}.service import AnswerService
+
+ROOT = Path(__file__).resolve().parent.parent
+
+
+class ScriptedModel:
+    """Returns fixed replies in order and records the prompts it was sent."""
+
+    name = "scripted"
+
+    def __init__(self, *replies: str):
+        self.replies, self.prompts = list(replies), []
+
+    def complete(self, system, user, max_tokens=400):
+        self.prompts.append(user)
+        return Reply(self.replies.pop(0), self.name, 100, 20, 5)
+
+
+@pytest.fixture
+def settings():
+    return Settings(corpus_dir=ROOT / "corpus", max_classification="internal")
+
+
+@pytest.fixture
+def service(settings):
+    return AnswerService(settings, StandInModel())
+
+
+@pytest.fixture
+def scripted(settings):
+    def make(*replies):
+        model = ScriptedModel(*replies)
+        return AnswerService(settings, model), model
+
+    return make

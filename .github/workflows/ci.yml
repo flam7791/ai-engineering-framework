@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  framework:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.13"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - name: Install
+        run: pip install -e ".[dev]" pip-audit
+      - name: Lint
+        run: |
+          ruff check .
+          ruff format --check .
+      - name: Tests (standards, intake, template rendering)
+        run: pytest
+      - name: Intake examples evaluation (golden assessments)
+        run: |
+          for f in examples/intake/*.yaml; do
+            aief intake "$f" | diff - "${f%.yaml}.assessment.md"
+          done
+      - name: The framework meets its own standards
+        run: aief check --strict .
+      - name: Dependency vulnerability scan
+        run: pip-audit .
+
+  template:
+    # Render the template, then build, test and evaluate the generated service as a user would.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Render
+        run: |
+          pip install -e ".[dev]"
+          copier copy --defaults --trust --vcs-ref HEAD . /tmp/svc
+      - name: Install, lint, test, evaluate
+        working-directory: /tmp/svc
+        run: |
+          pip install -e ".[dev]"
+          ruff check . && ruff format --check .
+          pytest
+          policy-answers eval --model standin
+          aief check --strict .
+      - name: Container with the stand-in model
+        working-directory: /tmp/svc
+        run: |
+          docker compose --profile standin up -d --build --wait
+          curl -fsS -X POST http://127.0.0.1:8000/answer -H 'Content-Type: application/json' \
+            -d '{"question": "Do I need original receipts for expenses above 25 euros?"}' | tee a.json
+          grep -q '"status":"answered"' a.json
+          docker compose --profile standin down -v
+
+  portfolio:
+    # Report each reference implementation against the standards (informational).
+    runs-on: ubuntu-latest
+    continue-on-error: true
+    strategy:
+      fail-fast: false
+      matrix:
+        repo:
+          - policy-evidence-mcp
+          - governed-agents
+          - governed-llm-gateway
+          - governed-ai-platform
+          - reference-resolver-agent
+          - copilot-team-knowledge
+          - oecd-data-pipeline
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e .
+      - uses: actions/checkout@v4
+        with:
+          repository: flam7791/${{ matrix.repo }}
+          path: target
+      - name: Check
+        run: aief check --format md target | tee -a "$GITHUB_STEP_SUMMARY"

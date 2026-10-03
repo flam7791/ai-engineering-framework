@@ -1,0 +1,51 @@
+import pytest
+
+from {{ package_name }} import documents
+from {{ package_name }}.config import Settings
+
+from .conftest import ROOT
+
+
+def test_ceiling_withholds_restricted_documents():
+    passages, withheld = documents.load(ROOT / "corpus", "internal")
+    ids = {p.doc_id for p in passages}
+    assert "BRD-003" not in ids
+    assert {"POL-001", "FIN-012", "ITS-007"} <= ids
+    assert withheld == 1
+
+
+def test_public_ceiling_loads_public_only():
+    passages, withheld = documents.load(ROOT / "corpus", "public")
+    assert {p.doc_id for p in passages} == {"POL-001"}
+    assert withheld == 3
+
+
+def test_passages_are_split_by_section():
+    passages, _ = documents.load(ROOT / "corpus", "internal")
+    fin = [p for p in passages if p.doc_id == "FIN-012"]
+    assert [p.heading for p in fin] == ["Deadline", "Receipts", "Travel class"]
+    assert fin[0].id == "FIN-012#1"
+
+
+@pytest.mark.parametrize(
+    "front,message",
+    [
+        ("title: X\nclassification: public", "no id"),
+        ("id: X-1\nclassification: secretish", "classification must be"),
+    ],
+)
+def test_unlabelled_documents_are_refused(tmp_path, front, message):
+    (tmp_path / "doc.md").write_text(f"---\n{front}\n---\n## A\ntext\n", encoding="utf-8")
+    with pytest.raises(documents.DocumentError, match=message):
+        documents.load(tmp_path, "internal")
+
+
+def test_missing_front_matter_is_refused(tmp_path):
+    (tmp_path / "doc.md").write_text("## A\ntext\n", encoding="utf-8")
+    with pytest.raises(documents.DocumentError, match="no front matter"):
+        documents.load(tmp_path, "internal")
+
+
+def test_settings_reject_unknown_ceiling():
+    with pytest.raises(ValueError):
+        Settings(max_classification="top-secret")

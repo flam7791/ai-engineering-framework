@@ -1,0 +1,57 @@
+# docker compose --profile standin up -d --build --wait   # no model needed (demo, CI)
+# docker compose --profile local up -d --build --wait     # with Ollama; then pull the model:
+#   docker compose exec ollama ollama pull {{ local_model }}
+
+x-hardening: &hardening
+  read_only: true
+  tmpfs: [/tmp]
+  security_opt: ["no-new-privileges:true"]
+  cap_drop: [ALL]
+
+services:
+  app-standin:
+    <<: *hardening
+    profiles: [standin]
+    build: .
+    image: {{ project_slug }}:local
+    environment:
+      {{ package_name | upper }}_MODEL_BASE_URL: http://standin:11500/v1
+      {{ package_name | upper }}_MODEL_NAME: standin
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on:
+      standin: {condition: service_healthy}
+
+  standin:
+    <<: *hardening
+    profiles: [standin]
+    image: {{ project_slug }}:local
+    build: .
+    command: ["{{ project_slug }}", "standin-model", "--host", "0.0.0.0", "--port", "11500"]
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:11500/')"]
+      interval: 5s
+      retries: 10
+
+  app:
+    <<: *hardening
+    profiles: [local]
+    build: .
+    image: {{ project_slug }}:local
+    environment:
+      {{ package_name | upper }}_MODEL_BASE_URL: http://ollama:11434/v1
+      {{ package_name | upper }}_MODEL_NAME: {{ local_model }}
+    ports: ["127.0.0.1:8000:8000"]
+    depends_on: [ollama]
+
+  ollama:
+    profiles: [local]
+    image: ollama/ollama:latest
+    volumes: ["ollama-models:/root/.ollama"]
+    # For an NVIDIA GPU, uncomment:
+    # deploy:
+    #   resources:
+    #     reservations:
+    #       devices: [{driver: nvidia, count: all, capabilities: [gpu]}]
+
+volumes:
+  ollama-models:

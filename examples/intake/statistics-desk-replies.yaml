@@ -1,0 +1,22 @@
+# A fictional use case at a fictional organisation (the Aurora Institute).
+id: UC-014
+title: Draft replies to requests for statistics
+owner: Head of the Statistics Desk
+task: answer_from_documents        # see docs/use-case-intake.md for the list
+problem: >
+  The desk answers about 600 requests a month for figures and definitions. Most answers are in
+  published methodology notes and the statistics API, but finding and citing them takes time.
+users: 40
+uses_per_month: 600
+minutes_saved_per_use: 12
+tokens_per_use: 4000
+data:
+  classification: internal         # public | internal | restricted | confidential
+  personal_data: false
+  source_quality: curated          # curated | mixed | unmanaged
+actions: draft                     # read | draft | external
+error_tolerance: low               # cost of a wrong answer: low | medium | high
+systems: [document library, statistics API]
+systems_have_apis: true
+reusable_across_units: true
+owner_after_launch: Statistics Desk

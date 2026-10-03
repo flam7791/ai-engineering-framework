@@ -1,0 +1,63 @@
+# Copier template: a governed, local-first answer service.
+#
+#   pip install copier
+#   copier copy gh:flam7791/ai-engineering-framework my-service
+#
+# The generated service answers questions from approved documents with citations that are
+# checked in code. It runs on a local open-weight model through Ollama by default, on any
+# OpenAI-compatible endpoint (vLLM, an LLM gateway, a cloud provider) by configuration, and on
+# a deterministic stand-in model in CI, so it builds and tests with no key and no GPU.
+
+_subdirectory: template
+_templates_suffix: .jinja
+_answers_file: .copier-answers.yml
+_min_copier_version: "9.4"
+
+project_name:
+  type: str
+  help: Name of the service, in words
+  default: Policy answers
+
+project_slug:
+  type: str
+  help: Repository and command name
+  default: "{{ project_name | lower | replace(' ', '-') }}"
+  validator: "{% if not (project_slug | regex_search('^[a-z][a-z0-9-]+$')) %}lower case letters, digits and hyphens{% endif %}"
+
+package_name:
+  type: str
+  help: Python package name
+  default: "{{ project_slug | replace('-', '_') }}"
+  validator: "{% if not (package_name | regex_search('^[a-z][a-z0-9_]+$')) %}lower case letters, digits and underscores{% endif %}"
+
+description:
+  type: str
+  help: One sentence on what it does
+  default: Answers staff questions from approved documents, with every citation checked in code.
+
+owner:
+  type: str
+  help: Team that owns and runs the service after launch
+  default: AI Lab
+
+classification_ceiling:
+  type: str
+  help: Highest document classification the service may read
+  choices: [public, internal, restricted]
+  default: internal
+
+local_model:
+  type: str
+  help: Default local model (Ollama tag)
+  default: llama3.2:3b
+
+_message_after_copy: |
+  Created {{ project_slug }}. Next:
+
+    cd {{ _copier_conf.dst_path }}
+    python -m venv .venv && . .venv/bin/activate     # Windows: .venv\Scripts\activate
+    pip install -e ".[dev]"
+    pytest && {{ project_slug }} eval --model standin
+
+  With Ollama running locally:  ollama pull {{ local_model }}
+                                {{ project_slug }} ask "How long do I have to submit an expense claim?"

@@ -1,0 +1,62 @@
+# Operations: {{ project_name }}
+
+Owner: **{{ owner }}** · Backup: _name_ · Next review: _date, every three months_
+
+## Release gate
+
+A release goes out only when every line is ticked. If one fails, say which.
+
+- [ ] `pytest` and `ruff` pass in CI
+- [ ] Evaluation passes with no safety failure, on the stand-in **and** on the recorded live run
+      of the production model (simulated results alone never pass the gate)
+- [ ] `aief check .` passes (MUST rules)
+- [ ] Classification ceiling and sharing scope confirmed with the information owner
+- [ ] Previous version tagged, so a rollback is a redeploy, not a rebuild
+- [ ] Users told what changed (CHANGELOG.md)
+
+## Rollout
+
+| Stage | Who | Success metric (fixed before launch) | Widen when | Stop when |
+|---|---|---|---|---|
+| Pilot | _team, size, four weeks_ | answered rate, withheld rate, minutes saved per question | _threshold_ | any confirmed wrong answer relied on |
+| Production | _units_ | same, plus cost per answer | _threshold_ | safety failure |
+
+## Monitoring
+
+All signals come from the audit log (one JSON line per request, no question text) unless noted.
+
+| Signal | Source | Frequency | Alert when |
+|---|---|---|---|
+| Requests, users | audit log; access log for users | weekly | drop of half over two weeks |
+| Not-found rate | `status = not_found` | weekly | above 30%: documents missing |
+| Withheld rate | `status = rejected`, by `reason` | weekly | above 10%, or any link rejection |
+| Quality | sample of 10 real questions a month, scored against the acceptance criteria | monthly | any wrong answer with a valid citation |
+| Latency | `latency_ms` p95 | weekly | above 20 s (local CPU) or 5 s (GPU or cloud) |
+| Cost | `input_tokens` + `output_tokens` × price; zero API cost on a local model | monthly | above budget |
+| Model errors | `status = error` | daily | any sustained run |
+
+## Feedback into the evaluation
+
+Every confirmed failure becomes a case in `evals/cases.jsonl` (marked with the date) before the
+fix ships, then the live run is recorded again.
+
+## Change and drift
+
+Re-run the evaluation and re-record the live run when: the prompt, retrieval or guardrails
+change; a document is added or replaced; the model or its version changes (including a new
+Ollama tag). Roll back if a case that passed now fails and the fix is not same-day.
+
+## Incident runbook
+
+| Incident | Detect | Contain | Tell | Follow up |
+|---|---|---|---|---|
+| Wrong answer relied on | user report, monthly sample | withdraw the document or the service; redeploy previous tag | information owner, users | new eval case; root cause in CHANGELOG |
+| Document above the ceiling exposed | `/health` withheld count, audit `retrieved` ids | stop the service; remove the document | information owner, security | check front matter at load; new test |
+| Planted instruction followed | withheld-link alerts, user report | stop; quarantine the document | security | new eval case |
+| Model unavailable or slow | `status = error`, latency alert | switch `MODEL_BASE_URL` to the fallback endpoint | users | capacity review |
+| Cost spike (cloud endpoint) | monthly cost check, gateway budget | lower the budget at the gateway | owner | find the pattern; rate limit |
+
+## Ownership and retirement
+
+Retire when use stays below the pilot threshold for two reviews, or a better route replaces it:
+switch off, tell users, archive the repository with its last evaluation results.

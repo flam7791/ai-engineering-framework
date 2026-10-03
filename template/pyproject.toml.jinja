@@ -1,0 +1,40 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "{{ project_slug }}"
+version = "0.1.0"
+description = "{{ description }}"
+readme = "README.md"
+requires-python = ">=3.10"
+authors = [{ name = "{{ owner }}" }]
+dependencies = [
+    "httpx>=0.27,<1",       # OpenAI-compatible model endpoint (Ollama, vLLM, gateway, cloud)
+    "fastapi>=0.110,<1",    # HTTP API
+    "uvicorn>=0.29,<1",     # ASGI server
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8", "ruff>=0.6", "pip-audit>=2.7"]
+
+[project.scripts]
+{{ project_slug }} = "{{ package_name }}.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/{{ package_name }}"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q"
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM"]
+
+# Recorded exceptions to the engineering standards (aief check reports them with the reason).
+[tool.aief.waivers]
+ENG-16 = "Internal service: not published under an open-source licence"

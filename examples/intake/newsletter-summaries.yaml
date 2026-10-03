@@ -1,0 +1,18 @@
+# A fictional use case at a fictional organisation (the Aurora Institute).
+id: UC-030
+title: Summarise published indicators for the monthly newsletter
+owner: Communications Officer
+task: data_to_text
+users: 3
+uses_per_month: 40
+minutes_saved_per_use: 15
+tokens_per_use: 2500
+data:
+  classification: public
+  personal_data: false
+  source_quality: curated
+actions: draft
+error_tolerance: medium
+systems: [statistics API]
+systems_have_apis: true
+owner_after_launch:                # nobody has agreed to run it yet

@@ -1,0 +1,62 @@
+"""Settings, read from environment variables prefixed with the package name.
+
+The defaults run against a local open-weight model through Ollama's OpenAI-compatible API, so
+nothing leaves the machine unless someone changes the endpoint on purpose. Any other
+OpenAI-compatible endpoint works the same way: vLLM on a GPU server, an LLM gateway that adds
+budgets and masking, or a cloud deployment in the organisation's tenant.
+"""
+
+from __future__ import annotations
+
+import os
+from dataclasses import dataclass
+from pathlib import Path
+
+PREFIX = (__package__ or "service").upper() + "_"
+LEVELS = ["public", "internal", "restricted", "confidential"]
+
+
+@dataclass(frozen=True)
+class Settings:
+    model_base_url: str = "http://localhost:11434/v1"  # Ollama
+    model_name: str = "{{ local_model }}"
+    model_api_key: str = ""  # a local model needs none
+    corpus_dir: Path = Path("corpus")
+    max_classification: str = "{{ classification_ceiling }}"
+    allowed_link_domains: tuple[str, ...] = ("aurora.example",)
+    top_k: int = 4
+    min_score: float = 0.5
+    max_question_chars: int = 1000
+    max_answer_tokens: int = 400
+    timeout_s: float = 180.0  # a laptop CPU is slow; a GPU server is not
+
+    def __post_init__(self) -> None:
+        if self.max_classification not in LEVELS:
+            raise ValueError(f"max_classification must be one of {', '.join(LEVELS)}")
+        if not self.model_base_url.startswith(("http://", "https://")):
+            raise ValueError("model_base_url must be an http(s) URL")
+
+    @classmethod
+    def from_env(cls, **overrides) -> Settings:
+        env = os.environ
+
+        def get(name: str, default):
+            return env.get(PREFIX + name.upper(), default)
+
+        values = {
+            "model_base_url": get("model_base_url", cls.model_base_url),
+            "model_name": get("model_name", cls.model_name),
+            "model_api_key": get("model_api_key", cls.model_api_key),
+            "corpus_dir": Path(get("corpus_dir", cls.corpus_dir)),
+            "max_classification": get("max_classification", cls.max_classification).lower(),
+            "allowed_link_domains": tuple(
+                d.strip()
+                for d in get("allowed_link_domains", ",".join(cls.allowed_link_domains)).split(",")
+                if d.strip()
+            ),
+            "top_k": int(get("top_k", cls.top_k)),
+            "min_score": float(get("min_score", cls.min_score)),
+            "timeout_s": float(get("timeout_s", cls.timeout_s)),
+        }
+        values.update(overrides)
+        return cls(**values)
