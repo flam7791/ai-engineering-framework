@@ -79,6 +79,35 @@ took about 18 seconds per answer against about one second. Routing each task to 
 suits it passed all 24. Twenty-four tasks are directional, not a benchmark; the method is the
 point: measure each candidate on the service's own cases.
 
+## Measured on a laptop: Llama 3.1 8B across the reference implementations
+
+One open-weight model (Llama 3.1 8B through Ollama, 8k context, temperature 0) on one laptop CPU
+(Intel Core i7-13620H, 16 GB, integrated graphics), October 2026. Each repository holds the
+recorded answers and the full results.
+
+| Service | Evaluation | Result | Time per call |
+|---|---|---|---|
+| Service generated from this template (P1) | 10 cases incl. planted instruction, withheld document | **10/10**, citation accuracy 1.0, no safety failure | about 17 s |
+| reference-resolver-agent (P4) | 22 references, gold set | **precision 1.00, recall 1.00**, no wrong link (Claude: 1.00 / 1.00) | about 45 s per reference |
+| copilot-team-knowledge (P6) | 12 questions incl. draft, restricted, injection | **11/12**, no blocking failure | about 2 min |
+| oecd-data-pipeline (P3) | 9 rows | **7/9 accepted**, the 2 others caught by the validator | about 1 min per batch |
+
+What it shows about the method, more than about the model:
+
+- **The guardrails did the work they were built for.** In the template service the model
+  followed the planted instruction and told the user to confirm a password reset on an outside
+  site. The validator withheld the answer because the link was not on the allowed list. The model
+  was fooled; the code was not.
+- **Live runs find integration bugs that scripted tests do not.** The first run exposed two
+  adapter bugs: tool arguments in the wrong JSON types (resolver recall 0.89 until fixed) and a
+  stray comma per CSV row (pipeline 4/9 until fixed). Both are now fixed and tested with the
+  recorded shapes.
+- **A weaker model lowers automation, not precision**, when the design puts checks after the
+  model: no wrong link, no unpublished card, no invented figure was released in any run.
+- **Latency is the price on a CPU.** Seconds to minutes per call is acceptable for batch work and
+  sensitive teams; interactive use needs a GPU server (vLLM) or a commercial model through the
+  gateway where the data allows.
+
 ## Running each reference implementation locally
 
 | Repository | Local model setting |

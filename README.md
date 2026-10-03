@@ -104,6 +104,15 @@ ollama pull llama3.2:3b && my-service ask "How many days do I have to submit an 
 The generated service passes every standard on day one (`aief check --strict`), runs on a local
 open-weight model by default, and builds, tests and evaluates in CI with no key and no GPU.
 
+## Measured on open-weight models
+
+Every reference implementation was run against Llama 3.1 8B on a laptop CPU, with the answers
+recorded and replayed in CI: 10/10 for a service generated from the template, precision and
+recall 1.00 for the resolver (the same as Claude, at zero cost), 11/12 with no blocking failure
+for the knowledge layer, 7/9 rows accepted by the pipeline's validator. In the template service
+the model followed a planted instruction and the validator withheld the answer. Details and what
+the runs exposed: [docs/model-selection.md](docs/model-selection.md#measured-on-a-laptop-llama-31-8b-across-the-reference-implementations).
+
 ## Principles
 
 - **Local first, commercial by choice.** Every pattern has a path that keeps data on the

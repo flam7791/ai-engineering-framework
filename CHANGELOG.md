@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.1 (2026-10)
+
+- Measured results with Llama 3.1 8B across the reference implementations (docs/model-selection.md, docs/results/).
+
 ## 0.1.0 (2026-10)
 
 - Reference architecture, six patterns, two platform components.

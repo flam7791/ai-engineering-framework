@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ai-engineering-framework"
-version = "0.1.0"
+version = "0.1.1"
 description = "A local-first engineering framework for governed AI services: reference architecture, patterns, standards, a conformance check, a use-case intake scorer and a service template."
 readme = "README.md"
 license = "MIT"
