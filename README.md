@@ -148,4 +148,4 @@ repository's `pyproject.toml`.
 CI runs the framework's own tests, renders the template and runs the generated service's tests
 and evaluation, and reports every reference implementation against the standards.
 
-Built with AI-assisted development; the design decisions are in [docs/adr/](docs/adr/).
+The design decisions are in [docs/adr/](docs/adr/).
