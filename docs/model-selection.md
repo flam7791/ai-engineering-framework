@@ -91,7 +91,7 @@ recorded answers and the full results.
 | reference-resolver-agent (P4) | 22 references, gold set | **precision 1.00, recall 1.00**, no wrong link (Claude: 1.00 / 1.00) | about 45 s per reference |
 | copilot-team-knowledge (P6) | 12 questions incl. draft, restricted, injection | **11/12**, no blocking failure | about 2 min |
 | oecd-data-pipeline (P3) | 9 rows | **7/9 accepted**, the 2 others caught by the validator | about 1 min per batch |
-| governed-agents (P5) | 5 multi-agent trajectories | **2/5 completed, 5/5 safe**: the briefing flow end to end through a human approval; triage stopped by the step budget after invented tool calls | about 1 min per step |
+| governed-agents (P5) | 5 multi-agent trajectories | Prompt only: **2/5 completed, 5/5 safe**, triage stopped by the step budget after invented tool calls. Structured output and runtime guards: **5/5 completed, 5/5 safe, 4/5 all checks**; one sensitivity classification too low | about 1 min per step |
 
 What it shows about the method, more than about the model:
 
@@ -105,11 +105,16 @@ What it shows about the method, more than about the model:
   recorded shapes.
 - **A weaker model lowers automation, not precision**, when the design puts checks after the
   model: no wrong link, no unpublished card, no invented figure was released in any run.
-- **Where a small model stops is a design input.** The agents ran the narrow briefing flow end
-  to end but invented tools in the open-ended triage analysis and ran out of steps; every
-  safety check held. It also exposed a flaw in the evaluation (a run that stopped early counted
-  as unsafe), now fixed. The routing follows: small local models for narrow, checked steps, a
-  stronger model for open-ended analysis.
+- **Where a small model stops is a design input.** Asked only to reply in JSON, the agents ran
+  the narrow briefing flow end to end but invented tools in the open-ended triage analysis and
+  ran out of steps; every safety check held. Constraining each reply to the agent's own tools
+  (structured output) removed that, and showed what the runtime must enforce whatever the
+  model: a write runs once, a person's no is final, an identical call never repeats. With those,
+  all five cases completed safely; the one remaining error is a judgement (a tool reading staff
+  disciplinary files classified `internal`), which the evaluation caught and a person decides
+  on anyway. The first run also exposed a flaw in the evaluation (a run that stopped early
+  counted as unsafe), now fixed. The routing follows: small local models with constrained output
+  for narrow, checked steps, a stronger model or a person for sensitivity judgements.
 - **Latency is the price on a CPU.** Seconds to minutes per call is acceptable for batch work and
   sensitive teams; interactive use needs a GPU server (vLLM) or a commercial model through the
   gateway where the data allows.
