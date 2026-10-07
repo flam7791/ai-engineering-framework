@@ -56,6 +56,11 @@ PATTERNS = {
     "team_knowledge_in_assistant": Pattern(
         "P6", "Curated knowledge layer for an enterprise assistant", "copilot-team-knowledge"
     ),
+    "decide_from_closed_set": Pattern(
+        "P7",
+        "Bounded judgment: a typed decision from a closed answer set, people below the threshold",
+        "reference-resolver-agent",
+    ),
 }
 PLATFORM = [
     "C1 Model gateway: routing, budgets, personal-data masking (governed-llm-gateway)",
@@ -277,6 +282,20 @@ def assess(data: dict) -> Assessment:
         controls.append("Citations or figures validated in code; failures go to a review queue")
     if task in {"multi_step_with_actions"}:
         controls.append("Policy engine on every tool call, step and cost budgets, kill switch")
+    if task in {"match_or_classify", "decide_from_closed_set"}:
+        controls.append(
+            "The model answers from a closed set (a schema enum); anything else counts as no "
+            "decision and goes to a person"
+        )
+        controls.append(
+            "Acceptance thresholds calibrated on a labelled set before the pilot: accuracy per "
+            "confidence band reported in every evaluation"
+        )
+    if task == "decide_from_closed_set":
+        controls.append(
+            "Hard rules (permissions, policy, exact restrictions) run before the model's "
+            "judgment and are never replaced by it"
+        )
 
     conditions = [f"{x.criterion}: {x.reason}" for x in scores if x.score <= 2]
     if not owner_after:

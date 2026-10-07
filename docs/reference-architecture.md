@@ -14,7 +14,7 @@ flowchart TB
     end
     subgraph AP["2 Application"]
       A1[Answer services<br/>P1]
-      A2[Pipelines<br/>P3, P4]
+      A2[Pipelines<br/>P3, P4, P7]
       A3[Agent runtime<br/>P5: policy engine,<br/>approvals, audit]
     end
     subgraph TL["3 Tools and knowledge"]

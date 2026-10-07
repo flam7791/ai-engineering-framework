@@ -1,6 +1,6 @@
 # Engineering standards
 
-Version 0.1 · The minimum bar for any AI service. **MUST** rules block a release; **SHOULD**
+Version 0.2 · The minimum bar for any AI service. **MUST** rules block a release; **SHOULD**
 rules are expected, and an exception is recorded as a waiver with its reason.
 
 Rules marked ✓ are checked automatically by `aief check`. The check looks for evidence that a
@@ -26,6 +26,7 @@ practice is in place; a review still decides whether it is done well.
 | ENG-14 ✓ | SHOULD | Dependency vulnerability scan in CI | `pip-audit`, OSV-Scanner, Trivy, Grype or CodeQL in CI |
 | ENG-15 ✓ | SHOULD | Changelog | `CHANGELOG.md` |
 | ENG-16 ✓ | SHOULD | Licence | A `LICENSE` file (internal services usually waive it) |
+| ENG-17 ✓ | SHOULD | Context file for coding agents | `AGENTS.md` (or `CLAUDE.md`) at the root that names a command to run: tests, lint, evaluation ([ADR 0005](adr/0005-agent-context-and-skills.md)) |
 
 ## Practices reviewed, not checked
 
@@ -35,6 +36,10 @@ practice is in place; a review still decides whether it is done well.
 - The topology follows the data classification ([intake](use-case-intake.md)).
 - Deterministic code for anything that can be written as a rule; the model only where reading,
   judgement or wording is needed.
+- Where the model only has to decide (a category, a candidate, a yes/no), use pattern P7: a
+  closed answer set, thresholds calibrated on a gold set, a person below the threshold.
+- `AGENTS.md` states the invariants nobody may weaken, not only the commands; a tool repository
+  that agents will call ships a `SKILL.md` saying when and how to use it.
 
 **Models**
 

@@ -65,6 +65,11 @@ LOCAL_RUNTIME = re.compile(
     r"openai compatible|local model|runs offline|no api key)\b",
     re.IGNORECASE,
 )
+COMMAND_HINT = re.compile(
+    r"\b(pytest|ruff|npm (run|test)|make \w+|go test|cargo test|docker compose|tox|nox)\b"
+    r"|```(bash|sh|shell|powershell)",
+    re.IGNORECASE,
+)
 SCANNERS = re.compile(r"\b(pip-audit|safety check|osv-scanner|trivy|grype|codeql)\b", re.I)
 
 
@@ -257,6 +262,23 @@ def _system_card(repo: Repo):
     return ("pass", repo.rel(found[0])) if found else ("fail", "no SYSTEM_CARD.md")
 
 
+def _agent_context(repo: Repo):
+    """A root context file for coding agents, naming at least one command to run.
+
+    Coding agents read Markdown context files at the repository root before they work
+    (AGENTS.md is the shared convention; CLAUDE.md is read by Claude Code and can import
+    AGENTS.md). Without one, every agent rediscovers the commands and, worse, the invariants
+    nobody may weaken. The check wants the file and a runnable command in it.
+    """
+    found = repo.find(r"^(agents|claude)\.md$")
+    if not found:
+        return "fail", "no AGENTS.md (or CLAUDE.md) at the root"
+    for path in found:
+        if COMMAND_HINT.search(repo.read(path)):
+            return "pass", path.name
+    return "fail", f"{found[0].name} names no command to run (tests, lint, evaluation)"
+
+
 def _changelog(repo: Repo):
     found = repo.find(r"^(changelog|history|releases)\.md$")
     return ("pass", found[0].name) if found else ("fail", "no CHANGELOG.md")
@@ -279,6 +301,7 @@ RULES: list[Rule] = [
     Rule("ENG-14", "Dependency vulnerability scan in CI", "SHOULD", _vuln_scan),
     Rule("ENG-15", "Changelog", "SHOULD", _changelog),
     Rule("ENG-16", "Licence", "SHOULD", _license),
+    Rule("ENG-17", "Context file for coding agents (AGENTS.md)", "SHOULD", _agent_context),
 ]
 
 

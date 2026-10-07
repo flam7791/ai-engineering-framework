@@ -122,3 +122,15 @@ def test_cli_json_and_error(tmp_path, capsys):
     bad = tmp_path / "bad.yaml"
     bad.write_text("- a list\n", encoding="utf-8")
     assert main(["intake", str(bad)]) == 2
+
+
+def test_bounded_judgment_gets_its_controls():
+    a = intake.assess(base(task="decide_from_closed_set"))
+    assert a.pattern.id == "P7"
+    assert any("closed set" in c for c in a.controls)
+    assert any("calibrated" in c for c in a.controls)
+    assert any("never replaced by it" in c for c in a.controls)
+    # P4's model step is a bounded judgment too, but its hard rules are the scoring itself.
+    p4 = intake.assess(base(task="match_or_classify"))
+    assert any("calibrated" in c for c in p4.controls)
+    assert not any("never replaced by it" in c for c in p4.controls)

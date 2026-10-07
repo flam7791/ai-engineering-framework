@@ -1,0 +1,24 @@
+# A fictional use case at a fictional organisation (the Aurora Institute).
+id: UC-027
+title: Route incoming requests for input to the right unit
+owner: Head of the Secretariat
+task: decide_from_closed_set
+problem: >
+  Requests for input from partner organisations arrive in one mailbox. A coordinator reads each
+  one and forwards it to one of nine units, which takes a few minutes per request and delays
+  the reply. The model would pick the unit from the fixed list, with a confidence; requests
+  below the threshold stay with the coordinator.
+users: 6
+uses_per_month: 1500
+minutes_saved_per_use: 3
+tokens_per_use: 900
+data:
+  classification: internal
+  personal_data: false
+  source_quality: curated
+actions: draft                     # routing into a unit's queue is internal and reversible
+error_tolerance: medium
+systems: [mailbox, request tracker]
+systems_have_apis: true
+reusable_across_units: true
+owner_after_launch: Secretariat

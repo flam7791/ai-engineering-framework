@@ -28,6 +28,7 @@ def good_repo(root: Path) -> Path:
     write(root, "CHANGELOG.md", "# Changelog\n")
     write(root, "pyproject.toml", '[project]\ndependencies = [\n    "httpx>=0.27,<1",\n]\n')
     write(root, "Dockerfile", "FROM python:3.12-slim\nUSER appuser\n")
+    write(root, "AGENTS.md", "# Agents\n\n```bash\npytest\n```\n")
     return root
 
 
@@ -118,3 +119,20 @@ def test_cli_exit_codes(tmp_path, capsys):
     assert main(["check", str(tmp_path / "bad")]) == 1
     assert main(["check", "--format", "md", str(tmp_path / "good")]) == 0
     assert "| ENG-01 |" in capsys.readouterr().out
+
+
+def test_agent_context_file_needs_a_command(tmp_path):
+    good_repo(tmp_path)
+    assert by_rule(standards.check(tmp_path))["ENG-17"].status == "pass"
+    write(tmp_path, "AGENTS.md", "# Agents\n\nBe careful.\n")
+    finding = by_rule(standards.check(tmp_path))["ENG-17"]
+    assert finding.status == "fail"
+    assert "names no command" in finding.detail
+    (tmp_path / "AGENTS.md").unlink()
+    write(tmp_path, "CLAUDE.md", "@AGENTS.md\n\nRun `pytest` before committing.\n")
+    assert by_rule(standards.check(tmp_path))["ENG-17"].status == "pass"
+    (tmp_path / "CLAUDE.md").unlink()
+    finding = by_rule(standards.check(tmp_path))["ENG-17"]
+    assert finding.status == "fail"
+    assert standards.passed([finding])  # a SHOULD rule: fails only under --strict
+    assert not standards.passed([finding], strict=True)

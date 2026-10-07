@@ -21,8 +21,8 @@ hardware, with commercial models as a deliberate, governed choice rather than th
 | | What | Where |
 |---|---|---|
 | **Reference architecture** | Layers, components and three deployment topologies (on-premises, hybrid, cloud) | [docs/reference-architecture.md](docs/reference-architecture.md) |
-| **Pattern catalogue** | Six solution patterns, each with when to use it, controls, local option and a working reference implementation | [docs/patterns.md](docs/patterns.md) |
-| **Engineering standards** | 16 rules (MUST / SHOULD), checked by `aief check` | [docs/standards.md](docs/standards.md) |
+| **Pattern catalogue** | Seven solution patterns, each with when to use it, controls, local option and a working reference implementation | [docs/patterns.md](docs/patterns.md) |
+| **Engineering standards** | 17 rules (MUST / SHOULD), checked by `aief check` | [docs/standards.md](docs/standards.md) |
 | **Lifecycle and gates** | Explore, proof of concept, pilot, production, retire: what each gate needs | [docs/lifecycle.md](docs/lifecycle.md) |
 | **Use-case intake** | Scores a proposal on seven criteria and recommends pattern, topology and controls | [docs/use-case-intake.md](docs/use-case-intake.md) |
 | **Model and technology selection** | Commercial, open-source or open-weight; the local stack; measured trade-offs | [docs/model-selection.md](docs/model-selection.md) |
@@ -54,6 +54,7 @@ Each pattern points to a working repository that implements it, tested in CI:
 | P4 Deterministic first, model chooses among retrieved candidates | [reference-resolver-agent](https://github.com/flam7791/reference-resolver-agent) | yes: OpenAI-compatible local model |
 | P5 Governed agent with policy engine and human approval | [governed-agents](https://github.com/flam7791/governed-agents) | yes: through the gateway or Ollama |
 | P6 Curated knowledge layer for an enterprise assistant | [copilot-team-knowledge](https://github.com/flam7791/copilot-team-knowledge) | yes: local answering over the same bundles |
+| P7 Bounded judgment: a typed decision from a closed answer set | [reference-resolver-agent](https://github.com/flam7791/reference-resolver-agent) (adjudication, calibration table), [governed-llm-gateway](https://github.com/flam7791/governed-llm-gateway) (judged router), [policy-evidence-mcp](https://github.com/flam7791/policy-evidence-mcp) (reranker) | yes: structured output from a local model |
 | C1 Model gateway: routing, budgets, masking, chargeback | [governed-llm-gateway](https://github.com/flam7791/governed-llm-gateway) | yes: `local_only` policy |
 | C2 Reference deployment: hardened containers, monitoring | [governed-ai-platform](https://github.com/flam7791/governed-ai-platform) | yes: `sovereign` profile, no external provider |
 
@@ -136,14 +137,14 @@ repository's `pyproject.toml`.
 
 | Repository | MUST | SHOULD | Waived |
 |---|---|---|---|
-| [ai-engineering-framework](https://github.com/flam7791/ai-engineering-framework) | 6/6 | 7/7 | ENG-05, ENG-12 (no model here) |
-| [governed-ai-platform](https://github.com/flam7791/governed-ai-platform) | 6/6 | 6/6 | ENG-05, ENG-12, ENG-14 (deployment repository) |
-| [governed-agents](https://github.com/flam7791/governed-agents) | 8/8 | 7/7 | ENG-11 (runbook in the platform) |
-| [governed-llm-gateway](https://github.com/flam7791/governed-llm-gateway) | 8/8 | 7/7 | ENG-11 (runbook in the platform) |
-| [policy-evidence-mcp](https://github.com/flam7791/policy-evidence-mcp) | 8/8 | 7/7 | ENG-11 (runbook in the platform) |
-| [reference-resolver-agent](https://github.com/flam7791/reference-resolver-agent) | 7/7 | 8/8 | none |
-| [copilot-team-knowledge](https://github.com/flam7791/copilot-team-knowledge) | 7/7 | 8/8 | none |
-| [oecd-data-pipeline](https://github.com/flam7791/oecd-data-pipeline) | 7/7 | 8/8 | none |
+| [ai-engineering-framework](https://github.com/flam7791/ai-engineering-framework) | 6/6 | 8/8 | ENG-05, ENG-12 (no model here) |
+| [governed-ai-platform](https://github.com/flam7791/governed-ai-platform) | 6/6 | 7/7 | ENG-05, ENG-12, ENG-14 (deployment repository) |
+| [governed-agents](https://github.com/flam7791/governed-agents) | 8/8 | 8/8 | ENG-11 (runbook in the platform) |
+| [governed-llm-gateway](https://github.com/flam7791/governed-llm-gateway) | 8/8 | 8/8 | ENG-11 (runbook in the platform) |
+| [policy-evidence-mcp](https://github.com/flam7791/policy-evidence-mcp) | 8/8 | 8/8 | ENG-11 (runbook in the platform) |
+| [reference-resolver-agent](https://github.com/flam7791/reference-resolver-agent) | 7/7 | 9/9 | none |
+| [copilot-team-knowledge](https://github.com/flam7791/copilot-team-knowledge) | 7/7 | 9/9 | none |
+| [oecd-data-pipeline](https://github.com/flam7791/oecd-data-pipeline) | 7/7 | 9/9 | none |
 
 ## How this repository is checked
 

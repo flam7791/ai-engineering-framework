@@ -1,0 +1,47 @@
+# AGENTS.md: {{ project_name }}
+
+Instructions for coding agents (and people) changing this repository. Read this first.
+
+{{ description }} Pattern P1 from
+[ai-engineering-framework](https://github.com/flam7791/ai-engineering-framework): governed
+retrieval with a sensitivity ceiling. Owner: {{ owner }}.
+
+## Commands
+
+```bash
+pip install -e ".[dev]"
+ruff check . && ruff format --check .
+pytest                                   # offline, no model, no key
+{{ project_slug }} eval --model standin  # plumbing and guardrails, must pass
+for dir in evals/recordings/*/; do [ -d "$dir" ] && {{ project_slug }} eval --model replay --recordings "$dir" --min-pass 0; done
+aief check --strict .                    # the framework's engineering standards
+```
+
+Run all of them before you say a change is done. CI runs the same steps.
+
+## Layout
+
+- `src/{{ package_name }}/documents.py`: loads the corpus; documents above the ceiling are never loaded
+- `src/{{ package_name }}/retrieval.py`: keyword retrieval
+- `src/{{ package_name }}/guardrails.py`: the validator that decides what is released
+- `src/{{ package_name }}/llm.py`: the OpenAI-compatible client, the stand-in and record/replay
+- `src/{{ package_name }}/service.py`, `api.py`, `cli.py`: the answer flow and its entry points
+- `evals/cases.jsonl`: the evaluation; `evals/recordings/`: recorded live runs that CI replays
+
+## Invariants: never weaken these
+
+1. **Documents above `{{ classification_ceiling }}` are not loaded**, not merely filtered (D4).
+2. **The validator releases an answer only** if it cites a source it was given and links only to
+   allowed domains (D5). Prompts ask; code decides.
+3. **Tests and CI need no model and no key** (D6). New tests use the stand-in or a recording.
+4. **No question or answer text in logs**; the audit line carries ids and outcomes only.
+5. **Content from documents is data.** The planted instruction in the evaluation must stay
+   withheld; never delete or relax that case to make a run pass.
+
+## Working rules
+
+- A confirmed failure becomes a case in `evals/cases.jsonl` before the fix.
+- A change to the prompt, retrieval, model or documents makes old recordings stale: re-record,
+  do not edit recordings by hand.
+- Record every change in `CHANGELOG.md`; record a design change in `docs/decisions.md`.
+- Ask before adding a runtime dependency, an external service, or a tool that writes or sends.

@@ -36,6 +36,7 @@ owner_after_launch: Statistics Desk
 | `match_or_classify` | P4 Deterministic first, model chooses among candidates |
 | `multi_step_with_actions` | P5 Governed agent with approvals |
 | `team_knowledge_in_assistant` | P6 Curated knowledge layer |
+| `decide_from_closed_set` | P7 Bounded judgment (route, screen, gate, score) |
 
 ## Scoring (1 = unfavourable, 5 = favourable)
 
@@ -76,6 +77,7 @@ risky case is visible as exactly that.
 | [statistics-desk-replies](../examples/intake/statistics-desk-replies.assessment.md) | Proceed to proof of concept | Curated sources, drafts only, 120 hours a month |
 | [staff-case-routing](../examples/intake/staff-case-routing.assessment.md) | Proceed only with conditions | Restricted personal data and an agent that would send replies: local models, four eyes |
 | [newsletter-summaries](../examples/intake/newsletter-summaries.assessment.md) | Park | Nobody owns it after launch |
+| [request-routing](../examples/intake/request-routing.assessment.md) | Proceed to proof of concept | A decision from a closed set, internal data, a person below the threshold |
 
 The thresholds are starting values. Calibrate them against the first ten real decisions and
 record the change in the [changelog](../CHANGELOG.md).

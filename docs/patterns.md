@@ -1,6 +1,6 @@
 # Pattern catalogue
 
-Version 0.1 · Six solution patterns cover most enterprise AI use cases seen in a large
+Version 0.2 · Seven solution patterns cover most enterprise AI use cases seen in a large
 knowledge organisation. Each entry says when to use it and when not, the controls it needs, how
 it runs locally, and which repository implements it. Start from the pattern; adapt only where
 the use case demands it, and record why in the service's `docs/decisions.md`.
@@ -13,6 +13,7 @@ the use case demands it, and record why in the service's `docs/decisions.md`.
 | P4 | Deterministic first, model chooses among retrieved candidates | Matching, classification, resolution at volume | reference-resolver-agent |
 | P5 | Governed agent with policy engine and human approval | Multi-step work that ends in an action | governed-agents |
 | P6 | Curated knowledge layer for an enterprise assistant | Make an existing assistant answer from what a team agreed | copilot-team-knowledge |
+| P7 | Bounded judgment: a typed decision from a closed answer set | Route, screen, gate, rerank, score against a rubric | reference-resolver-agent (adjudication); governed-llm-gateway (judged router); policy-evidence-mcp (reranker) |
 
 Platform components used by all: **C1** model gateway (governed-llm-gateway) and **C2**
 reference deployment (governed-ai-platform).
@@ -118,6 +119,48 @@ decisions.
   assistant licences or for content that must stay on-premises.
 - **Evaluate:** the failures that matter: superseded decisions, drafts, restricted cards,
   prompt injection in a card.
+
+## P7 Bounded judgment: a typed decision from a closed answer set
+
+**Use when** software needs a decision, not a paragraph: which unit gets a request, which of
+five candidates is the cited work, whether a passage answers the question, whether a draft can
+go out, which model tier a prompt needs. The answer space is small and known in advance.
+**Do not use when** the output is text a person will read (P1, P3), or when a rule can decide:
+write the rule.
+
+```mermaid
+flowchart LR
+  S[State + one typed question] --> H{Hard rules<br/>permissions, policy} -- pass --> J[Model answers from<br/>a closed set + confidence]
+  H -- fail --> X[Refused by code]
+  J -- "valid value, at or above<br/>calibrated threshold" --> A[Act]
+  J -- "below threshold,<br/>or not a valid value" --> R[Person, or a safe default]
+```
+
+P7 is a step inside other patterns as often as a service of its own: P4's adjudication, a
+reranker in P1, a routing decision in C1, a confidence gate before a P5 action.
+
+- **Controls:** the answer is a schema enum or a number in a range, so anything else counts as
+  no decision; hard rules (permissions, the policy engine, exact restrictions) run first and are
+  never replaced by the judgment; the threshold is calibrated on a labelled set, and below it a
+  person decides or a safe default applies (keywords-only, the stronger model, the review
+  queue); the model's stated confidence is not evidence on its own, so a decision that acts
+  needs corroboration from code where code can give it.
+- **Batching:** judgments that need only their own item and a shared context can go in one
+  call (the context is sent once); comparative decisions (rank, pick the best duplicate) run
+  after, over the scored set. Measure batch size per model: in reference-resolver-agent, two 8B
+  open-weight models parsed 2 of 22 references in batches of 20 and the rest fell back to
+  heuristics, so batch size is a per-model setting, not a constant.
+- **Local option:** any OpenAI-compatible local model with structured output or a forced tool
+  call; a small model lowers automation (more items go to a person), not precision, when the
+  controls above are in place. Hosted decision models (classifiers that return typed answers
+  with probabilities) are another option; they sit behind the gateway like any external model,
+  so `local_only` teams never reach them.
+- **Evaluate:** accuracy against the labelled set, the share decided automatically, and a
+  calibration table (accuracy per confidence band). A threshold is a policy choice: change it
+  only with the evaluation that shows the trade-off.
+- **Typical failure:** a valid value that is wrong, with high confidence. Type enforcement
+  removes malformed answers, not wrong ones; the calibration table and corroboration rules are
+  what catch them.
 
 ---
 
