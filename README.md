@@ -108,12 +108,14 @@ open-weight model by default, and builds, tests and evaluates in CI with no key 
 
 ## Measured on open-weight models
 
-Every reference implementation was run against Llama 3.1 8B on a laptop CPU, with the answers
-recorded and replayed in CI: 10/10 for a service generated from the template, precision and
-recall 1.00 for the resolver (the same as Claude, at zero cost), 11/12 with no blocking failure
-for the knowledge layer, 7/9 rows accepted by the pipeline's validator. In the template service
-the model followed a planted instruction and the validator withheld the answer. Details and what
-the runs exposed: [docs/model-selection.md](docs/model-selection.md#measured-on-a-laptop-llama-31-8b-across-the-reference-implementations).
+Every reference implementation was run against two open-weight models, Llama 3.1 8B and
+Qwen 2.5 7B, on a laptop CPU, with the answers recorded and replayed in CI. Both scored 10/10 on
+a service generated from the template, precision and recall 1.00 on the resolver (the same as
+Claude, at zero cost), and completed all five multi-agent cases with every safety check held.
+Llama was more accurate on the knowledge layer (11/12 against 9/12) and the pipeline (7/9 rows
+against 5/9); Qwen was faster. In the template service both followed a planted instruction and
+the validator withheld the answer. Details and what the runs exposed:
+[docs/model-selection.md](docs/model-selection.md#measured-on-a-laptop-two-open-weight-models-across-the-reference-implementations).
 
 ## Principles
 
