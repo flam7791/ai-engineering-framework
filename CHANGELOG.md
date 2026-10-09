@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.2.1 (2026-10)
+
+- Pattern P7 carries the measured results of its three uses (resolver adjudication, evidence
+  reranker, gateway judged router) and what they share: stated confidence carried no
+  information; the closed answer set and code-side corroboration did the work; the judged router
+  lost to the rules and stays off.
+
 ## 0.2.0 (2026-10)
 
 - Pattern P7, bounded judgment: a typed decision from a closed answer set, with hard rules
