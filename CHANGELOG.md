@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+- Pattern P7's reranker row uses the 40-question run of policy-evidence-mcp: hit@1 0.70 to
+  0.78 and hit@3 0.90 to 0.95, with 29 of 43 hybrid searches getting no decision. The third
+  lesson adds: measure on enough cases.
+
 ## 0.2.1 (2026-10)
 
 - Pattern P7 carries the measured results of its three uses (resolver adjudication, evidence

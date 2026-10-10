@@ -167,7 +167,7 @@ reranker in P1, a routing decision in C1, a confidence gate before a P5 action.
 | Where | Judge | Result | What decided it |
 |---|---|---|---|
 | Resolver adjudication (P4) | Claude Sonnet 5, Llama 3.1 8B, Qwen 2.5 7B | Precision 1.00 for all three | Qwen's two wrong choices came with confidence 0.95 and 0.80; the score floor and the cited-author rule sent both to a person |
-| Evidence reranker (P1) | Qwen 2.5 7B | hit@3 0.77 to 0.85 on paraphrases, no leak | 6 of 14 replies graded 1 passage of 20: no decision, search order kept; the gain came from the other 8 |
+| Evidence reranker (P1) | Qwen 2.5 7B | hit@1 0.70 to 0.78, hit@3 0.90 to 0.95 on 40 paraphrases, no leak | 29 of 43 hybrid searches got an incomplete reply (most graded 1 passage of 20): no decision, search order kept; the gain came from the other 14 |
 | Gateway judged router (C1) | Llama 3.1 8B | 14/24 agreement against the rules' 22/24; stays off | 22 of 24 tasks judged "simple", every one with confidence 0.9 or 1.0 |
 
 Three lessons hold across the three:
@@ -177,11 +177,13 @@ Three lessons hold across the three:
    closed set), not the model's view of itself. Where nothing in code could corroborate the
    judgment (routing), the pattern lost to a rule.
 2. **The closed answer set earns its place on small models.** Partial and double answers were
-   common (from 1 reply in 24 for the router to 6 in 14 for the reranker); each became "no
-   decision" and a safe default, instead of a wrong action.
+   common (from 1 reply in 24 for the router to 29 in 43 for the reranker, nearly all on
+   20-passage lists); each became "no decision" and a safe default, instead of a wrong action.
 3. **Measure before turning it on, and say when it loses.** One of three uses improved on what
    was there, one held precision while adding recall, one lost and stays off. The negative
-   result is in the gateway's README, recorded and replayed like the positive ones.
+   result is in the gateway's README, recorded and replayed like the positive ones. And
+   measure on enough cases: on its first 13 questions the reranker's rank-1 gain looked twice
+   what 40 questions showed.
 
 ---
 
